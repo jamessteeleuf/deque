@@ -8,7 +8,7 @@
 
 template<class T> class Deque{
 private:
-	T* inner_array;
+	T* inner_array; // Where out data is stored
 	int inner_size;
 	int cap;
 	int front;
@@ -16,11 +16,11 @@ private:
 	std::ostringstream output;
 	
 	bool full(){
-		return this->size() == this->cap;
+		return this->size() == this->cap; // Our array is full when its size is equal to its capacity
 	}
 	
 	bool too_big(){
-		return !this->empty() && this->size() == this->cap/4;
+		return !this->empty() && this->size() == this->cap/4; // Our inner array is too big if it's less than a quarter full
 	}
 
 	void grow(){
@@ -32,10 +32,12 @@ private:
 	}
 	
 	void resize(int){
+		// We need to temporarily store our inner array, which we'll do in copied_array
 		T* copied_array 	=	new T[cap];
 
 		int current			=	this->front;
 
+		// Just copy it over
 		for(int i = 0; i < this->inner_size; i++){
 			copied_array[i] 	=	this->inner_array[current];
 			current 			=	(current + 1) % this->cap;
@@ -43,9 +45,9 @@ private:
 
 		this->cap 	=	cap;
 
-		delete[] this->inner_array;
-		this->inner_array 	=	copied_array;
-		this->front 		=	0;
+		delete[] this->inner_array; // NO MEMORY LEAKS
+		this->inner_array 	=	copied_array; // And swap em
+		this->front 		=	0; // Reset our indices
 		this->back 			=	this->inner_size - 1;
 	}
 
@@ -63,16 +65,19 @@ public:
 	}
 	
 	void push_front(T const item){
+		// Grow our inner array if it's too small
 		if(this->full()){
 			this->grow();
 		}
 
+		// Wrap our index around if necessary
 		if(this->front == 0){
 			this->front 	=	this->cap - 1;
 		}else{
 			this->front--;
 		}
 
+		// There's a chance that we run out of memory, so we need to account for that
 		try{
 			this->inner_array[this->front] 	=	item;
 		}catch(std::bad_alloc){
@@ -82,12 +87,15 @@ public:
 	}
 
 	void push_back(T const item){
+		// Grow our inner array if it's too small
 		if(this->full()){
 			this->grow();
 		}
 
+		// Wrap our index around if necessary
 		this->back 	=	(this->back + 1) % this->cap;
 		
+		// There's a chance that we run out of memory, so we need to account for that
 		try{
 			this->inner_array[this->back] 	=	item;
 		}catch(std::bad_alloc){
@@ -98,14 +106,20 @@ public:
 	}
 	
 	T pop_front(){
+		// You can't pop an empty queue
 		if(this->empty()){
 			throw std::runtime_error("Queue is empty. Cannot remove item.");
 		}
 
+		// We return the frontmost element, so we need to save it before we pop it
 		T result	=	this->inner_array[this->front];
+		
+		// Wrap the index around if we reach the end
 		this->front	=	(this->front + 1) % this->cap;
+		
 		this->inner_size--;
 
+		// Shrink the queue if it's too big to conserve memory
 		if(this->too_big()){
 			this->shrink();
 		}
@@ -114,12 +128,15 @@ public:
 	}
 	
 	T pop_back(){
+		// You can't pop an empty queue
 		if(this->empty()){
-			throw std::runtime_error("Queue is empty. Cannot remove item. hi");
+			throw std::runtime_error("Queue is empty. Cannot remove item.");
 		}
 
+		// We return the backmost element, so we need to save it before we pop it
 		T result 	=	this->inner_array[this->back];
 
+		// Wrap the index around if we reach the end
 		if(this->back == 0){
 			this->back 	=	this->cap - 1;
 		}else{
@@ -128,6 +145,7 @@ public:
 
 		this->inner_size--;
 
+		// Shrink the queue if it's too big to conserve memory
 		if(this->too_big()){
 			this->shrink();
 		}
@@ -150,7 +168,7 @@ public:
 	std::string toStr(){
 		output.str(""); // clear this bad boy
 		
-		output << "outputting..." << std::endl;
+		// Stream all elements in the inner array
 		for(int i = 0; i < this->capacity(); i++){
 			output << this->inner_array[i] << std::endl;
 		}
